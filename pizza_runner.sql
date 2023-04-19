@@ -120,52 +120,52 @@ VALUES
 -- Replace 'null' and '' (empty strings) values with  NULL for exclusions
 UPDATE pizza_runner.customer_orders
 SET exclusions = NULL
-WHERE exclusions IN ('null', '')
+WHERE exclusions IN ('null', '');
 
 -- Replace 'null' and '' (empty strings) values with  NULL for extras
 UPDATE pizza_runner.customer_orders
 SET extras = NULL
-WHERE extras IN ('null', '')
+WHERE extras IN ('null', '');
 
 -- Replace 'null' and '' (empty strings) values with  NULL for cancellation 
 UPDATE pizza_runner.runner_orders
 SET cancellation = NULL
-WHERE cancellation = 'null' or cancellation = ''
+WHERE cancellation = 'null' or cancellation = '';
 
 -- Replace 'null' values with  NULL for pickup_time
 UPDATE pizza_runner.runner_orders
 SET pickup_time = NULL
-WHERE pickup_time = 'null'
+WHERE pickup_time = 'null';
 
 -- Replace 'null' values with  NULL for distance
 UPDATE pizza_runner.runner_orders
 SET distance = NULL
-WHERE distance = 'null'
+WHERE distance = 'null';
 
 -- Replace 'null' values with  NULL for duration
 UPDATE pizza_runner.runner_orders
 SET duration = NULL
-WHERE duration = 'null'
+WHERE duration = 'null';
 
 -- Change pickup_type data type to TIMESTAMP (without the need of picking a timezone)
 ALTER TABLE pizza_runner.runner_orders
-ALTER COLUMN pickup_time TYPE TIMESTAMP USING pickup_time::TIMESTAMP
+ALTER COLUMN pickup_time TYPE TIMESTAMP USING pickup_time::TIMESTAMP;
 
 -- Remove km and spaces from distance
 UPDATE pizza_runner.runner_orders
-SET distance = TRIM(' km' FROM distance)
+SET distance = TRIM(' km' FROM distance);
 
 -- Change distance data type to numeric
 ALTER TABLE pizza_runner.runner_orders
-ALTER COLUMN distance TYPE numeric USING distance::numeric
+ALTER COLUMN distance TYPE numeric USING distance::numeric;
 
 -- Remove any form of 'minutes' from duration
 UPDATE pizza_runner.runner_orders
-SET duration = TRIM(' minutes' FROM duration)
+SET duration = TRIM(' minutes' FROM duration);
 
 -- Change duration data type to integer
 ALTER TABLE pizza_runner.runner_orders
-ALTER COLUMN duration TYPE integer USING duration::integer
+ALTER COLUMN duration TYPE integer USING duration::integer;
 
 -- >>>>Exercises and questions<<<<
 
@@ -173,11 +173,11 @@ ALTER COLUMN duration TYPE integer USING duration::integer
 
 -- 1. How many pizzas were ordered?
 SELECT COUNT(*)
-FROM pizza_runner.customer_orders
+FROM pizza_runner.customer_orders;
 
 -- 2. How many unique customer orders were made?
 SELECT COUNT(DISTINCT order_id)
-FROM pizza_runner.customer_orders
+FROM pizza_runner.customer_orders;
 
 -- 3. How many successful orders were delivered by each runner?
 SELECT
@@ -185,7 +185,7 @@ SELECT
     COUNT(*)
 FROM pizza_runner.runner_orders
 WHERE cancellation IS NULL
-GROUP BY runner_id
+GROUP BY runner_id;
 
 -- 4. How many of each type of pizza was delivered?
 SELECT
@@ -195,7 +195,7 @@ FROM pizza_runner.customer_orders co
 JOIN pizza_runner.runner_orders ro
 USING(order_id)
 WHERE cancellation IS NULL
-GROUP BY pizza_id
+GROUP BY pizza_id;
 
 -- 5. How many Vegetarian and Meatlovers were ordered by each customer?
 SELECT
@@ -206,7 +206,7 @@ FROM pizza_runner.customer_orders co
 JOIN pizza_runner.pizza_names
 USING(pizza_id)
 GROUP BY customer_id, pizza_name
-ORDER BY customer_id, pizza_name
+ORDER BY customer_id, pizza_name;
 
 -- 6. What was the maximum number of pizzas delivered in a single order?
 SELECT
@@ -218,7 +218,7 @@ USING(order_id)
 WHERE cancellation IS NULL
 GROUP BY order_id
 ORDER BY cnt DESC
-LIMIT 1
+LIMIT 1;
 
 -- 7. For each customer, how many delivered pizzas had at least 1 change and how many had no changes?
 SELECT
@@ -230,7 +230,7 @@ JOIN pizza_runner.runner_orders ro
 USING(order_id)
 WHERE cancellation IS NULL
 GROUP BY customer_id
-ORDER BY customer_id
+ORDER BY customer_id;
 
 -- 8. How many pizzas were delivered that had both exclusions and extras?
 SELECT
@@ -238,7 +238,7 @@ SELECT
 FROM pizza_runner.customer_orders co
 JOIN pizza_runner.runner_orders ro
 USING(order_id)
-WHERE cancellation IS NULL
+WHERE cancellation IS NULL;
 
 -- 9. What was the total volume of pizzas ordered for each hour of the day?
 SELECT
@@ -246,14 +246,14 @@ SELECT
     COUNT(*)
 FROM pizza_runner.customer_orders
 GROUP BY hour_of_the_day
-ORDER BY hour_of_the_day
+ORDER BY hour_of_the_day;
 
 -- 10. What was the volume of orders for each day of the week?
 SELECT
     TO_CHAR(order_time, 'Day') as day_of_the_week,
     COUNT(DISTINCT order_id)
 FROM pizza_runner.customer_orders
-GROUP BY day_of_the_week
+GROUP BY day_of_the_week;
 
 -- B. Runner and Customer Experience
 
@@ -265,7 +265,7 @@ SELECT
     COUNT(*)
 FROM pizza_runner.runners
 GROUP BY week_of_signup
-ORDER BY week_of_signup
+ORDER BY week_of_signup;
 
 -- 2. What was the average time in minutes it took for each runner to arrive at the Pizza Runner HQ to pickup the order?
 
@@ -277,12 +277,14 @@ JOIN pizza_runner.runner_orders
 USING(order_id)
 WHERE cancellation IS NULL
 GROUP BY runner_id
-ORDER BY runner_id
+ORDER BY runner_id;
 
 -- 3. Is there any relationship between the number of pizzas and how long the order takes to prepare?
 -- There is no sufficient data to calculate the preparation time and confirm an existing relationship
 
 -- 4. What was the average distance travelled for each customer?
+
+XXX
 
 -- 5. What was the difference between the longest and shortest delivery times for all orders?
 
