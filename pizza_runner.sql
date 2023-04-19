@@ -127,18 +127,22 @@ UPDATE pizza_runner.customer_orders
 SET extras = NULL
 WHERE extras IN ('null', '')
 
+-- Replace 'null' and '' (empty strings) values with  NULL for cancellation 
 UPDATE pizza_runner.runner_orders
 SET cancellation = NULL
 WHERE cancellation = 'null' or cancellation = ''
 
+-- Replace 'null' values with  NULL for pickup_time
 UPDATE pizza_runner.runner_orders
 SET pickup_time = NULL
 WHERE pickup_time = 'null'
 
+-- Replace 'null' values with  NULL for distance
 UPDATE pizza_runner.runner_orders
 SET distance = NULL
 WHERE distance = 'null'
 
+-- Replace 'null' values with  NULL for duration
 UPDATE pizza_runner.runner_orders
 SET duration = NULL
 WHERE duration = 'null'
@@ -162,9 +166,6 @@ SET duration = TRIM(' minutes' FROM duration)
 -- Change duration data type to integer
 ALTER TABLE pizza_runner.runner_orders
 ALTER COLUMN duration TYPE integer USING duration::integer
-
-SELECT *
-FROM pizza_runner.runner_orders
 
 -- >>>>Exercises and questions<<<<
 
