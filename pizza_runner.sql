@@ -320,3 +320,113 @@ SELECT
 FROM pizza_runner.runner_orders
 GROUP BY runner_id
 ORDER BY runner_id
+
+-- C. Ingredient Optimisation
+
+-- * Creating alternative recipes table (with toppings description)
+CREATE TABLE IF NOT EXISTS pizza_recipes_new as 
+    SELECT
+        pizza_id,
+        topping_id,
+        topping_name
+    FROM (
+        SELECT
+            pizza_id,
+            unnest(string_to_array(toppings, ', '))::integer as topping_id
+        FROM pizza_runner.pizza_recipes
+        ORDER BY pizza_id
+    ) as new_recipes
+    JOIN pizza_runner.pizza_toppings as pt
+    USING(topping_id)
+    ORDER BY pizza_id, topping_id
+
+-- 1. What are the standard ingredients for each pizza?
+SELECT
+    pizza_id,
+    pizza_name,
+    topping_id,
+    topping_name
+FROM pizza_runner.pizza_recipes_new
+JOIN pizza_runner.pizza_names
+USING(pizza_id)
+
+-- 2. What was the most commonly added extra?
+SELECT
+    topping_name,
+    COUNT(*)
+FROM (
+    SELECT
+        unnest(string_to_array(extras, ', '))::integer as extras
+    FROM pizza_runner.customer_orders) e
+JOIN pizza_runner.pizza_toppings t
+ON e.extras=t.topping_id
+GROUP BY topping_name
+ORDER BY count DESC
+
+-- 3. What was the most common exclusion?
+SELECT
+    topping_name,
+    COUNT(*)
+FROM (
+    SELECT
+        unnest(string_to_array(exclusions, ', '))::integer as exclusions
+    FROM pizza_runner.customer_orders) e
+JOIN pizza_runner.pizza_toppings t
+ON e.exclusions=t.topping_id
+GROUP BY topping_name
+ORDER BY count DESC
+
+-- 4. Generate an order item for each record in the customers_orders table in the format of one of the following:
+--    > Meat Lovers
+--    > Meat Lovers - Exclude Beef
+--    > Meat Lovers - Extra Bacon
+--    > Meat Lovers - Exclude Cheese, Bacon - Extra Mushroom, Peppers
+
+SELECT 
+    order_id,
+    customer_id,
+    pizza_id,
+    exclusions,
+    extras,
+    order_time 
+FROM pizza_runner.customer_orders
+
+
+/*
+    SELECT
+        order_id,
+        customer_id,
+        pizza_id,
+        string_to_array(exclusions, ', ') as exclusions,
+        string_to_array(extras, ', ') as extras,
+        order_time
+    FROM pizza_runner.customer_orders) as orders
+*/
+
+
+-- 5. Generate an alphabetically ordered comma separated ingredient list for each pizza order  from the customer_orders table and add a 2x in front of any
+--    relevant ingredients
+--    > For example: "Meat Lovers: 2xBacon, Beef, ... , Salami"
+
+-- 6. What is the total quantity of each ingredient used in all delivered pizzas sorted by most frequent first?
+
+-- Alternative way for exclusions and extras
+(SELECT
+    order_id,
+    customer_id,
+    pizza_id,
+    unnest(string_to_array(exclusions, ', '))::integer as exclusions,
+    unnest(string_to_array(extras, ', '))::integer as extras,
+    order_time
+FROM pizza_runner.customer_orders)
+UNION
+(SELECT
+    order_id,
+    customer_id,
+    pizza_id,
+    exclusions::integer as exclusions,
+    extras::integer as extras,
+    order_time
+FROM pizza_runner.customer_orders
+WHERE exclusions IS NULL AND extras IS NULL)
+ORDER BY order_id
