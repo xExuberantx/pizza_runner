@@ -386,11 +386,19 @@ SELECT
     order_id,
     customer_id,
     pizza_id,
+    pizza_name,
     exclusions,
     extras,
-    order_time 
+    order_time,
+    pizza_name || CASE WHEN exclusions IS NULL AND extras IS NULL THEN ''
+        ELSE ' - ' || CASE WHEN END
+        as order_item
 FROM pizza_runner.customer_orders
+JOIN pizza_runner.pizza_names
+USING(pizza_id)
 
+-- exclusions comma separated
+-- extras comma separated
 
 /*
     SELECT
@@ -404,29 +412,50 @@ FROM pizza_runner.customer_orders
 */
 
 
--- 5. Generate an alphabetically ordered comma separated ingredient list for each pizza order  from the customer_orders table and add a 2x in front of any
+-- Alternative way for exclusions and extras
+WITH xyz as (
+        SELECT
+            order_id,
+            customer_id,
+            pizza_id,
+            ROW_NUMBER() OVER (PARTITION BY order_id, customer_id ORDER BY order_id) as order_pizza_id,
+            string_to_array(exclusions, ', ') as exclusions,
+            string_to_array(extras, ', ') as extras,
+            order_time
+        FROM pizza_runner.customer_orders
+),
+    orders_unpacked as (
+    SELECT
+        order_id,
+        customer_id,
+        pizza_id,
+        order_pizza_id,
+        unnest(exclusions)::integer as exclusions,
+        unnest(extras)::integer as extras,
+        order_time
+    FROM xyz
+    UNION ALL
+    SELECT
+        order_id,
+        customer_id,
+        pizza_id,
+        order_pizza_id,
+        NULL::integer as exclusions,
+        NULL::integer as extras,
+        order_time
+    FROM xyz
+    WHERE exclusions IS NULL AND extras IS NULL
+
+    ORDER BY order_id, order_pizza_id)
+
+SELECT *
+FROM orders_unpacked ou
+JOIN pizza_runner.pizza_toppings pt
+ON ou.exclusions=pt.topping_id OR ou.extras=pt.topping_id
+
+
+-- 5. Generate an alphabetically ordered comma separated ingredient list for each pizza order from the customer_orders table and add a 2x in front of any
 --    relevant ingredients
 --    > For example: "Meat Lovers: 2xBacon, Beef, ... , Salami"
 
 -- 6. What is the total quantity of each ingredient used in all delivered pizzas sorted by most frequent first?
-
--- Alternative way for exclusions and extras
-(SELECT
-    order_id,
-    customer_id,
-    pizza_id,
-    unnest(string_to_array(exclusions, ', '))::integer as exclusions,
-    unnest(string_to_array(extras, ', '))::integer as extras,
-    order_time
-FROM pizza_runner.customer_orders)
-UNION
-(SELECT
-    order_id,
-    customer_id,
-    pizza_id,
-    exclusions::integer as exclusions,
-    extras::integer as extras,
-    order_time
-FROM pizza_runner.customer_orders
-WHERE exclusions IS NULL AND extras IS NULL)
-ORDER BY order_id
