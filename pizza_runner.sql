@@ -268,7 +268,6 @@ GROUP BY week_of_signup
 ORDER BY week_of_signup;
 
 -- 2. What was the average time in minutes it took for each runner to arrive at the Pizza Runner HQ to pickup the order?
-
 SELECT
     runner_id,
     EXTRACT('minutes' FROM AVG(pickup_time - order_time + INTERVAL '30 second')) as avg_time_to_pickup -- +30sec to round to minute
@@ -283,11 +282,41 @@ ORDER BY runner_id;
 -- There is no sufficient data to calculate the preparation time and confirm an existing relationship
 
 -- 4. What was the average distance travelled for each customer?
-
-XXX
+SELECT
+    customer_id,
+    ROUND(AVG(distance), 2) as avg_distance
+FROM pizza_runner.customer_orders co
+JOIN pizza_runner.runner_orders ro
+USING(order_id)
+WHERE cancellation IS NULL
+GROUP BY customer_id
+ORDER BY customer_id;
 
 -- 5. What was the difference between the longest and shortest delivery times for all orders?
+SELECT MAX(delivery_time) - MIN(delivery_time) as longest_to_shortest_difference
+FROM ( 
+    SELECT
+        DISTINCT order_id,
+        -- Time from order to pickup + time from pickup to delivery
+        pickup_time - order_time + (INTERVAL '1 minute' * duration) as delivery_time 
+    FROM pizza_runner.customer_orders co
+    JOIN pizza_runner.runner_orders ro
+    USING(order_id)
+    WHERE cancellation IS NULL) as dt;
 
 -- 6. What was the average speed for each runner for each delivery and do you notice any trend for these values?
+SELECT
+    runner_id,
+    ROUND(AVG(distance), 2) as avg_dist_km,
+    ROUND(AVG(duration), 2) as avg_duration_m
+FROM pizza_runner.runner_orders
+WHERE cancellation IS NULL
+GROUP BY runner_id
 
 -- 7. What is the successful delivery percentage for each runner?
+SELECT
+    runner_id,
+    ROUND(AVG(CASE WHEN cancellation IS NULL THEN 1 ELSE 0 END) * 100, 2) as succ_del_per
+FROM pizza_runner.runner_orders
+GROUP BY runner_id
+ORDER BY runner_id
