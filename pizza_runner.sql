@@ -382,25 +382,6 @@ ORDER BY count DESC
 --    > Meat Lovers - Exclude Beef
 --    > Meat Lovers - Extra Bacon
 --    > Meat Lovers - Exclude Cheese, Bacon - Extra Mushroom, Peppers
-/*
-SELECT 
-    order_id,
-    customer_id,
-    pizza_id,
-    pizza_name,
-    exclusions,
-    extras,
-    order_time,
-    pizza_name || CASE WHEN exclusions IS NULL AND extras IS NULL THEN ''
-        ELSE ' - ' || CASE WHEN END
-        as order_item
-FROM pizza_runner.customer_orders
-JOIN pizza_runner.pizza_names
-USING(pizza_id)
-
--- exclusions comma separated
--- extras comma separated
-*/
 
 SELECT
     order_id,
@@ -411,20 +392,36 @@ SELECT
     extras,
     order_time,
     pizza_name || CASE
-                        WHEN exclusions IS NULL AND extras IS NULL THEN '' ELSE ' - ' ||
-                  CASE  
-                        WHEN '1' = ANY(exclusions) THEN 'Bacon'
-                        WHEN '2' = ANY(exclusions) THEN 'BBQ Sauce'
-                        WHEN '3' = ANY(exclusions) THEN 'Beef'
-                        WHEN '4' = ANY(exclusions) THEN 'Cheese'
-                        WHEN '5' = ANY(exclusions) THEN 'Chicken'
-                        WHEN '6' = ANY(exclusions) THEN 'Mushrooms'
-                        WHEN '7' = ANY(exclusions) THEN 'Onions'
-                        WHEN '8' = ANY(exclusions) THEN 'Pepperoni'
-                        WHEN '9' = ANY(exclusions) THEN 'Peppers'
-                        WHEN '10' = ANY(exclusions) THEN 'Salami'
-                        WHEN '11' = ANY(exclusions) THEN 'Tomatoes'
-                        WHEN '12' = ANY(exclusions) THEN 'Tomato Sauce' END AS enamez
+                        WHEN exclusions IS NOT NULL THEN ' - Exclude ' 
+                        || CASE  
+                                WHEN '1' = ANY(exclusions) THEN 'Bacon'
+                                WHEN '2' = ANY(exclusions) THEN 'BBQ Sauce'
+                                WHEN '3' = ANY(exclusions) THEN 'Beef'
+                                WHEN '4' = ANY(exclusions) THEN 'Cheese'
+                                WHEN '5' = ANY(exclusions) THEN 'Chicken'
+                                WHEN '6' = ANY(exclusions) THEN 'Mushrooms'
+                                WHEN '7' = ANY(exclusions) THEN 'Onions'
+                                WHEN '8' = ANY(exclusions) THEN 'Pepperoni'
+                                WHEN '9' = ANY(exclusions) THEN 'Peppers'
+                                WHEN '10' = ANY(exclusions) THEN 'Salami'
+                                WHEN '11' = ANY(exclusions) THEN 'Tomatoes'
+                                WHEN '12' = ANY(exclusions) THEN 'Tomato Sauce' END
+                        WHEN extras IS NOT NULL THEN ' - Extra '
+                        || CASE  
+                                WHEN '1' = ANY(extras) THEN 'Bacon'
+                                WHEN '2' = ANY(extras) THEN 'BBQ Sauce'
+                                WHEN '3' = ANY(extras) THEN 'Beef'
+                                WHEN '4' = ANY(extras) THEN 'Cheese'
+                                WHEN '5' = ANY(extras) THEN 'Chicken'
+                                WHEN '6' = ANY(extras) THEN 'Mushrooms'
+                                WHEN '7' = ANY(extras) THEN 'Onions'
+                                WHEN '8' = ANY(extras) THEN 'Pepperoni'
+                                WHEN '9' = ANY(extras) THEN 'Peppers'
+                                WHEN '10' = ANY(extras) THEN 'Salami'
+                                WHEN '11' = ANY(extras) THEN 'Tomatoes'
+                                WHEN '12' = ANY(extras) THEN 'Tomato Sauce' END
+                        ELSE '' END AS order_item
+
 FROM (
     SELECT
         order_id,
@@ -440,9 +437,78 @@ FROM (
 
 
 
-SELECT *
-FROM pizza_runner.pizza_recipes_new
-ORDER BY pizza_id, topping_id
+-- 4. Generate an order item for each record in the customers_orders table in the format of one of the following:
+--    > Meat Lovers
+--    > Meat Lovers - Exclude Beef
+--    > Meat Lovers - Extra Bacon
+--    > Meat Lovers - Exclude Cheese, Bacon - Extra Mushroom, Peppers
+
+SELECT
+    order_id,
+    customer_id,
+    pizza_id,
+    pizza_name,
+    exclusions,
+    extras,
+    order_time,
+    pizza_name || CASE
+                        WHEN exclusions IS NOT NULL THEN ' - Exclude ' 
+                        || CASE  
+                                WHEN '1' = exclusions[1] THEN 'Bacon'
+                                WHEN '2' = exclusions[1] THEN 'BBQ Sauce'
+                                WHEN '3' = exclusions[1] THEN 'Beef'
+                                WHEN '4' = exclusions[1] THEN 'Cheese'
+                                WHEN '5' = exclusions[1]THEN 'Chicken'
+                                WHEN '6' = exclusions[1] THEN 'Mushrooms'
+                                WHEN '7' = exclusions[1] THEN 'Onions'
+                                WHEN '8' = exclusions[1] THEN 'Pepperoni'
+                                WHEN '9' = exclusions[1] THEN 'Peppers'
+                                WHEN '10' = exclusions[1] THEN 'Salami'
+                                WHEN '11' = exclusions[1] THEN 'Tomatoes'
+                                WHEN '12' = exclusions[1] THEN 'Tomato Sauce' END
+                                || CASE  
+                                WHEN '1' = exclusions[2] THEN 'Bacon'
+                                WHEN '2' = exclusions[2] THEN 'BBQ Sauce'
+                                WHEN '3' = exclusions[2] THEN 'Beef'
+                                WHEN '4' = exclusions[2] THEN 'Cheese'
+                                WHEN '5' = exclusions[2]THEN 'Chicken'
+                                WHEN '6' = exclusions[2] THEN 'Mushrooms'
+                                WHEN '7' = exclusions[2] THEN 'Onions'
+                                WHEN '8' = exclusions[2] THEN 'Pepperoni'
+                                WHEN '9' = exclusions[2] THEN 'Peppers'
+                                WHEN '10' = exclusions[2] THEN 'Salami'
+                                WHEN '11' = exclusions[2] THEN 'Tomatoes'
+                                WHEN '12' = exclusions[2] THEN 'Tomato Sauce' END
+                        WHEN extras IS NOT NULL THEN ' - Extra '
+                        || CASE  
+                                WHEN '1' = extras[1] THEN 'Bacon'
+                                WHEN '2' = extras[1] THEN 'BBQ Sauce'
+                                WHEN '3' = extras[1] THEN 'Beef'
+                                WHEN '4' = extras[1] THEN 'Cheese'
+                                WHEN '5' = extras[1] THEN 'Chicken'
+                                WHEN '6' = extras[1] THEN 'Mushrooms'
+                                WHEN '7' = extras[1] THEN 'Onions'
+                                WHEN '8' = extras[1] THEN 'Pepperoni'
+                                WHEN '9' = extras[1] THEN 'Peppers'
+                                WHEN '10' = extras[1] THEN 'Salami'
+                                WHEN '11' = extras[1] THEN 'Tomatoes'
+                                WHEN '12' = extras[1] THEN 'Tomato Sauce' END
+                        ELSE '' END AS order_item
+
+FROM (
+    SELECT
+        order_id,
+        customer_id,
+        pizza_id,
+        pizza_name,
+        string_to_array(exclusions, ', ') as exclusions,
+        string_to_array(extras, ', ') as extras,
+        order_time
+    FROM pizza_runner.customer_orders
+    JOIN pizza_runner.pizza_names
+    USING(pizza_id)) as t
+
+
 
 -- Alternative way for exclusions and extras
 WITH xyz as (
