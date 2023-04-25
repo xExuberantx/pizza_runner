@@ -468,14 +468,18 @@ WITH exex as (
         JOIN pizza_runner.pizza_names
         USING(pizza_id)) as t)
 
-SELECT
-    pizza_name
+SELECT *
+    /*pizza_name
         || CASE
                 WHEN exclusions2 IS NULL AND extras2 IS NULL THEN '' ELSE ' - ' END
                     || CASE
-                            WHEN
+                            WHEN*/
 
 FROM exex
+
+
+-- Recipes pivoted
+
 
 
 -- Alternative way for exclusions and extras
