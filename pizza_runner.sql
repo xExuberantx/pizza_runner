@@ -350,6 +350,7 @@ FROM pizza_runner.pizza_recipes_new
 JOIN pizza_runner.pizza_names
 USING(pizza_id)
 
+
 -- 2. What was the most commonly added extra?
 SELECT
     topping_name,
@@ -381,7 +382,7 @@ ORDER BY count DESC
 --    > Meat Lovers - Exclude Beef
 --    > Meat Lovers - Extra Bacon
 --    > Meat Lovers - Exclude Cheese, Bacon - Extra Mushroom, Peppers
-
+/*
 SELECT 
     order_id,
     customer_id,
@@ -399,18 +400,49 @@ USING(pizza_id)
 
 -- exclusions comma separated
 -- extras comma separated
+*/
 
-/*
+SELECT
+    order_id,
+    customer_id,
+    pizza_id,
+    pizza_name,
+    exclusions,
+    extras,
+    order_time,
+    pizza_name || CASE
+                        WHEN exclusions IS NULL AND extras IS NULL THEN '' ELSE ' - ' ||
+                  CASE  
+                        WHEN '1' = ANY(exclusions) THEN 'Bacon'
+                        WHEN '2' = ANY(exclusions) THEN 'BBQ Sauce'
+                        WHEN '3' = ANY(exclusions) THEN 'Beef'
+                        WHEN '4' = ANY(exclusions) THEN 'Cheese'
+                        WHEN '5' = ANY(exclusions) THEN 'Chicken'
+                        WHEN '6' = ANY(exclusions) THEN 'Mushrooms'
+                        WHEN '7' = ANY(exclusions) THEN 'Onions'
+                        WHEN '8' = ANY(exclusions) THEN 'Pepperoni'
+                        WHEN '9' = ANY(exclusions) THEN 'Peppers'
+                        WHEN '10' = ANY(exclusions) THEN 'Salami'
+                        WHEN '11' = ANY(exclusions) THEN 'Tomatoes'
+                        WHEN '12' = ANY(exclusions) THEN 'Tomato Sauce' END AS enamez
+FROM (
     SELECT
         order_id,
         customer_id,
         pizza_id,
+        pizza_name,
         string_to_array(exclusions, ', ') as exclusions,
         string_to_array(extras, ', ') as extras,
         order_time
-    FROM pizza_runner.customer_orders) as orders
-*/
+    FROM pizza_runner.customer_orders
+    JOIN pizza_runner.pizza_names
+    USING(pizza_id)) as t
 
+
+
+SELECT *
+FROM pizza_runner.pizza_recipes_new
+ORDER BY pizza_id, topping_id
 
 -- Alternative way for exclusions and extras
 WITH xyz as (
@@ -450,9 +482,8 @@ WITH xyz as (
 
 SELECT *
 FROM orders_unpacked ou
-JOIN pizza_runner.pizza_toppings pt
-ON ou.exclusions=pt.topping_id OR ou.extras=pt.topping_id
-
+--JOIN pizza_runner.pizza_toppings pt
+--ON ou.exclusions=pt.topping_id OR ou.extras=pt.topping_id
 
 
 -- 5. Generate an alphabetically ordered comma separated ingredient list for each pizza order from the customer_orders table and add a 2x in front of any
