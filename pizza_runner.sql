@@ -311,7 +311,7 @@ SELECT
     ROUND(AVG(duration), 2) as avg_duration_m
 FROM pizza_runner.runner_orders
 WHERE cancellation IS NULL
-GROUP BY runner_id
+GROUP BY runner_id;
 
 -- 7. What is the successful delivery percentage for each runner?
 SELECT
@@ -319,7 +319,7 @@ SELECT
     ROUND(AVG(CASE WHEN cancellation IS NULL THEN 1 ELSE 0 END) * 100, 2) as succ_del_per
 FROM pizza_runner.runner_orders
 GROUP BY runner_id
-ORDER BY runner_id
+ORDER BY runner_id;
 
 -- C. Ingredient Optimisation
 
@@ -348,7 +348,7 @@ SELECT
     topping_name
 FROM pizza_runner.pizza_recipes_new
 JOIN pizza_runner.pizza_names
-USING(pizza_id)
+USING(pizza_id);
 
 
 -- 2. What was the most commonly added extra?
@@ -362,7 +362,7 @@ FROM (
 JOIN pizza_runner.pizza_toppings t
 ON e.extras=t.topping_id
 GROUP BY topping_name
-ORDER BY count DESC
+ORDER BY count DESC;
 
 -- 3. What was the most common exclusion?
 SELECT
@@ -375,7 +375,7 @@ FROM (
 JOIN pizza_runner.pizza_toppings t
 ON e.exclusions=t.topping_id
 GROUP BY topping_name
-ORDER BY count DESC
+ORDER BY count DESC;
 
 -- 4. Generate an order item for each record in the customers_orders table in the format of one of the following:
 --    > Meat Lovers
@@ -468,15 +468,48 @@ WITH exex as (
         JOIN pizza_runner.pizza_names
         USING(pizza_id)) as t)
 
-SELECT *
-    /*pizza_name
+SELECT
+    order_id,
+    customer_id,
+    pizza_id,
+    pizza_name,
+    exclusions,
+    extras,
+    order_time,
+    pizza_name
         || CASE
-                WHEN exclusions2 IS NULL AND extras2 IS NULL THEN '' ELSE ' - ' END
+                WHEN exclusions2 IS NOT NULL OR extras2 IS NOT NULL THEN ' - '
                     || CASE
-                            WHEN*/
-
+                            WHEN exclusions2 IS NOT NULL AND extras2 IS NOT NULL THEN exclusions2 || ' - ' || extras2
+                            WHEN exclusions2 IS NOT NULL AND extras2 IS NULL     THEN exclusions2
+                            ELSE extras2
+                        END
+                ELSE ''
+            END as order_items
 FROM exex
+ORDER BY order_id, pizza_id;
 
+-- Create recipes_pivotted
+CREATE TABLE IF NOT EXISTS pizza_runner.pizza_runner.recipes_pivotted (
+    pizza_id integer,
+    Bacon integer,
+    BBQ_Sauce integer,
+    Beef integer,
+    Cheese integer,
+    Chicken integer,
+    Mushrooms integer,
+    Onions integer,
+    Pepperoni integer,
+    Peppers integer,
+    Salami integer,
+    Tomato_Sauce integer,
+    Tomatoes integer
+);
+
+INSERT INTO pizza_runner.pizza_runner.recipes_pivotted
+VALUES
+    (1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0),
+    (2, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1)
 
 -- Recipes pivoted
 
@@ -527,5 +560,42 @@ FROM orders_unpacked ou
 -- 5. Generate an alphabetically ordered comma separated ingredient list for each pizza order from the customer_orders table and add a 2x in front of any
 --    relevant ingredients
 --    > For example: "Meat Lovers: 2xBacon, Beef, ... , Salami"
+
+WITH cus_or as (
+
+        SELECT
+            order_id,
+            customer_id,
+            pizza_id,
+            pizza_name,
+            string_to_array(exclusions, ', ') as exclusions,
+            string_to_array(extras, ', ') as extras,
+            order_time
+        FROM pizza_runner.customer_orders
+        JOIN pizza_runner.pizza_names
+        USING(pizza_id))
+
+SELECT
+    pizza_id,
+    order_id,
+    customer_id,
+    pizza_name,
+    exclusions,
+    extras,
+    CASE WHEN '1' = ANY(exclusions) THEN bacon - 1 WHEN '1' = ANY(extras) THEN bacon + 1 ELSE bacon END AS bacon,
+    CASE WHEN '2' = ANY(exclusions) THEN bbq_sauce - 1 WHEN '2' = ANY(extras) THEN bbq_sauce + 1 ELSE bbq_sauce END AS bbq_sauce,
+    CASE WHEN '3' = ANY(exclusions) THEN beef - 1 WHEN '3' = ANY(extras) THEN beef + 1 ELSE beef END AS beef,
+    CASE WHEN '4' = ANY(exclusions) THEN cheese - 1 WHEN '4' = ANY(extras) THEN cheese + 1 ELSE cheese END AS cheese,
+    CASE WHEN '5' = ANY(exclusions) THEN chicken - 1 WHEN '5' = ANY(extras) THEN chicken + 1 ELSE chicken END AS chicken,
+    CASE WHEN '6' = ANY(exclusions) THEN mushrooms - 1 WHEN '6' = ANY(extras) THEN mushrooms + 1 ELSE mushrooms END AS mushrooms,
+    CASE WHEN '7' = ANY(exclusions) THEN onions - 1 WHEN '7' = ANY(extras) THEN onions + 1 ELSE onions END AS onions,
+    CASE WHEN '8' = ANY(exclusions) THEN pepperoni - 1 WHEN '8' = ANY(extras) THEN pepperoni + 1 ELSE pepperoni END AS pepperoni,
+    CASE WHEN '9' = ANY(exclusions) THEN peppers - 1 WHEN '9' = ANY(extras) THEN peppers + 1 ELSE peppers END AS peppers,
+    CASE WHEN '10' = ANY(exclusions) THEN salami - 1 WHEN '10' = ANY(extras) THEN salami + 1 ELSE salami END AS salami,
+    CASE WHEN '12' = ANY(exclusions) THEN tomato_sauce - 1 WHEN '12' = ANY(extras) THEN tomato_sauce + 1 ELSE tomato_sauce END AS tomato_sauce,
+    CASE WHEN '11' = ANY(exclusions) THEN tomatoes - 1 WHEN '11' = ANY(extras) THEN tomatoes + 1 ELSE tomatoes END AS tomatoes
+FROM cus_or
+JOIN pizza_runner.recipes_pivotted
+USING(pizza_id)
 
 -- 6. What is the total quantity of each ingredient used in all delivered pizzas sorted by most frequent first?
