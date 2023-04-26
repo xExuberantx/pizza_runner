@@ -509,7 +509,7 @@ CREATE TABLE IF NOT EXISTS pizza_runner.pizza_runner.recipes_pivotted (
 INSERT INTO pizza_runner.pizza_runner.recipes_pivotted
 VALUES
     (1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0),
-    (2, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1)
+    (2, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1);
 
 -- Alternative way for exclusions and extras
 WITH xyz as (
@@ -548,7 +548,7 @@ WITH xyz as (
     ORDER BY order_id, order_pizza_id)
 
 SELECT *
-FROM orders_unpacked ou
+FROM orders_unpacked ou;
 
 -- 5. Generate an alphabetically ordered comma separated ingredient list for each pizza order from the customer_orders table and add a 2x in front of any
 --    relevant ingredients
@@ -616,7 +616,7 @@ SELECT
     pizza_name || ': ' || concat_ws(', ', bacon, bbq_sauce, beef, cheese, chicken, mushrooms, onions, pepperoni, peppers, salami, tomato_sauce, tomatoes)
     as toppings_list
 FROM toppings_converted
-ORDER BY order_id
+ORDER BY order_id;
 
 -- 6. What is the total quantity of each ingredient used in all delivered pizzas sorted by most frequent first?
 
@@ -724,7 +724,7 @@ SELECT
     'tomatoes' as topping,
     SUM(tomatoes) as sum
 FROM toppings_reviewed
-ORDER BY sum DESC
+ORDER BY sum DESC;
 
 
 -- D. Pricing and Ratings
@@ -732,11 +732,89 @@ ORDER BY sum DESC
 -- 1. If a Meat Lovers pizza costs $12 and Vegetarian costs $10 and there were no charges for changes - how much money has Pizza Runner
 --    made so far if there are no delivery fees?
 
+SELECT 
+    pizza_id,
+    COUNT(*),
+    CASE
+        WHEN pizza_id = 1 THEN COUNT(*) * 12
+        WHEN pizza_id = 2 THEN COUNT(*) * 10
+        END AS revenue
+FROM pizza_runner.customer_orders
+WHERE order_id IN (
+    SELECT order_id
+    FROM pizza_runner.runner_orders
+    WHERE cancellation IS NULL
+)
+GROUP BY pizza_id;
+
 -- 2. What if there was an additional $1 charge for any pizza extras?
 --    > Add cheese is $1 extra
+WITH cte as (
+    SELECT
+        order_id,
+        customer_id,
+        pizza_id,
+        pizza_name,
+        string_to_array(exclusions, ', ') as exclusions,
+        string_to_array(extras, ', ') as extras,
+        order_time
+    FROM pizza_runner.customer_orders
+    JOIN pizza_runner.pizza_names
+    USING(pizza_id)
+    WHERE order_id IN (
+        SELECT order_id
+        FROM pizza_runner.runner_orders
+        WHERE cancellation IS NULL
+        )
+    ),
+    revenues as (        
+    SELECT 
+        pizza_id,
+        COUNT(*),
+        CASE
+            WHEN pizza_id = 1 THEN COUNT(*) * 12 
+            WHEN pizza_id = 2 THEN COUNT(*) * 10
+            END AS revenue
+    FROM cte
+    GROUP BY pizza_id
+    ),
+    extras as (
+    SELECT
+        pizza_id,
+        SUM(cardinality(extras)) as extras_amount
+    FROM cte
+    GROUP BY pizza_id
+    )
+
+SELECT
+    pizza_id,
+    revenue + extras_amount as revenue_with_extras
+FROM revenues
+JOIN extras
+USING(pizza_id)
+ORDER BY pizza_id;
+
 
 -- 3. The Pizza Runner team now wants to add an additional ratings system that allows customers to rate their runner, how would you design an additional table
 --    for this new dataset - generate a schema for this new table and insert your own data for ratings for each successful customer order between 1 to 5.
+
+CREATE TABLE IF NOT EXISTS pizza_runner.pizza_runner.runner_ratings (
+    runner_id integer,
+    order_id integer,
+    rating integer
+);
+
+INSERT INTO pizza_runner.pizza_runner.runner_ratings
+VALUES
+    (1,1,3),
+    (1,2,3),
+    (1,3,4),
+    (2,4,1),
+    (3,5,5),
+    (2,7,4),
+    (2,8,5),
+    (1,10,5);
+
 
 -- 4. Using your newly generated table - can you join all of the information together to form a table which has the following information for successful deliveries?
 /*    customer_id
@@ -749,6 +827,8 @@ ORDER BY sum DESC
       Delivery duration
       Average speed
       Total number of pizzas */
+
+SELECT
 
 -- 5. If a Meat Lovers pizza was $12 and Vegetarian $10 fixed prices with no cost for extras and each runner is paid $0.30 per kilometre traveled - 
 --    how much money does Pizza Runner have left over after these deliveries?
