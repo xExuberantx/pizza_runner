@@ -511,10 +511,6 @@ VALUES
     (1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0),
     (2, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1)
 
--- Recipes pivoted
-
-
-
 -- Alternative way for exclusions and extras
 WITH xyz as (
         SELECT
@@ -553,16 +549,12 @@ WITH xyz as (
 
 SELECT *
 FROM orders_unpacked ou
---JOIN pizza_runner.pizza_toppings pt
---ON ou.exclusions=pt.topping_id OR ou.extras=pt.topping_id
-
 
 -- 5. Generate an alphabetically ordered comma separated ingredient list for each pizza order from the customer_orders table and add a 2x in front of any
 --    relevant ingredients
 --    > For example: "Meat Lovers: 2xBacon, Beef, ... , Salami"
 
 WITH cus_or as (
-
         SELECT
             order_id,
             customer_id,
@@ -573,29 +565,139 @@ WITH cus_or as (
             order_time
         FROM pizza_runner.customer_orders
         JOIN pizza_runner.pizza_names
-        USING(pizza_id))
-
-SELECT
-    pizza_id,
-    order_id,
-    customer_id,
-    pizza_name,
-    exclusions,
-    extras,
-    CASE WHEN '1' = ANY(exclusions) THEN bacon - 1 WHEN '1' = ANY(extras) THEN bacon + 1 ELSE bacon END AS bacon,
-    CASE WHEN '2' = ANY(exclusions) THEN bbq_sauce - 1 WHEN '2' = ANY(extras) THEN bbq_sauce + 1 ELSE bbq_sauce END AS bbq_sauce,
-    CASE WHEN '3' = ANY(exclusions) THEN beef - 1 WHEN '3' = ANY(extras) THEN beef + 1 ELSE beef END AS beef,
-    CASE WHEN '4' = ANY(exclusions) THEN cheese - 1 WHEN '4' = ANY(extras) THEN cheese + 1 ELSE cheese END AS cheese,
-    CASE WHEN '5' = ANY(exclusions) THEN chicken - 1 WHEN '5' = ANY(extras) THEN chicken + 1 ELSE chicken END AS chicken,
-    CASE WHEN '6' = ANY(exclusions) THEN mushrooms - 1 WHEN '6' = ANY(extras) THEN mushrooms + 1 ELSE mushrooms END AS mushrooms,
-    CASE WHEN '7' = ANY(exclusions) THEN onions - 1 WHEN '7' = ANY(extras) THEN onions + 1 ELSE onions END AS onions,
-    CASE WHEN '8' = ANY(exclusions) THEN pepperoni - 1 WHEN '8' = ANY(extras) THEN pepperoni + 1 ELSE pepperoni END AS pepperoni,
-    CASE WHEN '9' = ANY(exclusions) THEN peppers - 1 WHEN '9' = ANY(extras) THEN peppers + 1 ELSE peppers END AS peppers,
-    CASE WHEN '10' = ANY(exclusions) THEN salami - 1 WHEN '10' = ANY(extras) THEN salami + 1 ELSE salami END AS salami,
-    CASE WHEN '12' = ANY(exclusions) THEN tomato_sauce - 1 WHEN '12' = ANY(extras) THEN tomato_sauce + 1 ELSE tomato_sauce END AS tomato_sauce,
-    CASE WHEN '11' = ANY(exclusions) THEN tomatoes - 1 WHEN '11' = ANY(extras) THEN tomatoes + 1 ELSE tomatoes END AS tomatoes
-FROM cus_or
-JOIN pizza_runner.recipes_pivotted
-USING(pizza_id)
+        USING(pizza_id)
+        ),
+    toppings_reviewed as (
+        SELECT
+            order_id,
+            pizza_id,
+            customer_id,
+            pizza_name,
+            exclusions,
+            extras,
+            CASE WHEN '1' = ANY(exclusions) THEN bacon - 1 WHEN '1' = ANY(extras) THEN bacon + 1 ELSE bacon END AS bacon,
+            CASE WHEN '2' = ANY(exclusions) THEN bbq_sauce - 1 WHEN '2' = ANY(extras) THEN bbq_sauce + 1 ELSE bbq_sauce END AS bbq_sauce,
+            CASE WHEN '3' = ANY(exclusions) THEN beef - 1 WHEN '3' = ANY(extras) THEN beef + 1 ELSE beef END AS beef,
+            CASE WHEN '4' = ANY(exclusions) THEN cheese - 1 WHEN '4' = ANY(extras) THEN cheese + 1 ELSE cheese END AS cheese,
+            CASE WHEN '5' = ANY(exclusions) THEN chicken - 1 WHEN '5' = ANY(extras) THEN chicken + 1 ELSE chicken END AS chicken,
+            CASE WHEN '6' = ANY(exclusions) THEN mushrooms - 1 WHEN '6' = ANY(extras) THEN mushrooms + 1 ELSE mushrooms END AS mushrooms,
+            CASE WHEN '7' = ANY(exclusions) THEN onions - 1 WHEN '7' = ANY(extras) THEN onions + 1 ELSE onions END AS onions,
+            CASE WHEN '8' = ANY(exclusions) THEN pepperoni - 1 WHEN '8' = ANY(extras) THEN pepperoni + 1 ELSE pepperoni END AS pepperoni,
+            CASE WHEN '9' = ANY(exclusions) THEN peppers - 1 WHEN '9' = ANY(extras) THEN peppers + 1 ELSE peppers END AS peppers,
+            CASE WHEN '10' = ANY(exclusions) THEN salami - 1 WHEN '10' = ANY(extras) THEN salami + 1 ELSE salami END AS salami,
+            CASE WHEN '12' = ANY(exclusions) THEN tomato_sauce - 1 WHEN '12' = ANY(extras) THEN tomato_sauce + 1 ELSE tomato_sauce END AS tomato_sauce,
+            CASE WHEN '11' = ANY(exclusions) THEN tomatoes - 1 WHEN '11' = ANY(extras) THEN tomatoes + 1 ELSE tomatoes END AS tomatoes
+        FROM cus_or
+        JOIN pizza_runner.recipes_pivotted
+        USING(pizza_id)
+    )
+SELECT *
+FROM toppings_reviewed
 
 -- 6. What is the total quantity of each ingredient used in all delivered pizzas sorted by most frequent first?
+
+WITH cus_or as (
+        SELECT
+            order_id,
+            customer_id,
+            pizza_id,
+            pizza_name,
+            string_to_array(exclusions, ', ') as exclusions,
+            string_to_array(extras, ', ') as extras,
+            order_time
+        FROM pizza_runner.customer_orders
+        JOIN pizza_runner.pizza_names
+        USING(pizza_id)
+        ),
+    toppings_reviewed as (
+        SELECT
+            order_id,
+            pizza_id,
+            customer_id,
+            pizza_name,
+            exclusions,
+            extras,
+            CASE WHEN '1' = ANY(exclusions) THEN bacon - 1 WHEN '1' = ANY(extras) THEN bacon + 1 ELSE bacon END AS bacon,
+            CASE WHEN '2' = ANY(exclusions) THEN bbq_sauce - 1 WHEN '2' = ANY(extras) THEN bbq_sauce + 1 ELSE bbq_sauce END AS bbq_sauce,
+            CASE WHEN '3' = ANY(exclusions) THEN beef - 1 WHEN '3' = ANY(extras) THEN beef + 1 ELSE beef END AS beef,
+            CASE WHEN '4' = ANY(exclusions) THEN cheese - 1 WHEN '4' = ANY(extras) THEN cheese + 1 ELSE cheese END AS cheese,
+            CASE WHEN '5' = ANY(exclusions) THEN chicken - 1 WHEN '5' = ANY(extras) THEN chicken + 1 ELSE chicken END AS chicken,
+            CASE WHEN '6' = ANY(exclusions) THEN mushrooms - 1 WHEN '6' = ANY(extras) THEN mushrooms + 1 ELSE mushrooms END AS mushrooms,
+            CASE WHEN '7' = ANY(exclusions) THEN onions - 1 WHEN '7' = ANY(extras) THEN onions + 1 ELSE onions END AS onions,
+            CASE WHEN '8' = ANY(exclusions) THEN pepperoni - 1 WHEN '8' = ANY(extras) THEN pepperoni + 1 ELSE pepperoni END AS pepperoni,
+            CASE WHEN '9' = ANY(exclusions) THEN peppers - 1 WHEN '9' = ANY(extras) THEN peppers + 1 ELSE peppers END AS peppers,
+            CASE WHEN '10' = ANY(exclusions) THEN salami - 1 WHEN '10' = ANY(extras) THEN salami + 1 ELSE salami END AS salami,
+            CASE WHEN '12' = ANY(exclusions) THEN tomato_sauce - 1 WHEN '12' = ANY(extras) THEN tomato_sauce + 1 ELSE tomato_sauce END AS tomato_sauce,
+            CASE WHEN '11' = ANY(exclusions) THEN tomatoes - 1 WHEN '11' = ANY(extras) THEN tomatoes + 1 ELSE tomatoes END AS tomatoes
+        FROM cus_or
+        JOIN pizza_runner.recipes_pivotted
+        USING(pizza_id)
+        WHERE order_id IN ( -- Only delivered orders
+            SELECT order_id
+            FROM pizza_runner.runner_orders
+            WHERE cancellation IS NULL
+        )
+    )
+
+
+
+SELECT
+    'bacon' as topping,
+    SUM(bacon) as sum
+FROM toppings_reviewed
+UNION
+SELECT
+    'bbq_sauce' as topping,
+    SUM(bbq_sauce) as sum
+FROM toppings_reviewed
+UNION
+SELECT
+    'beef' as topping,
+    SUM(beef) as sum
+FROM toppings_reviewed
+UNION
+SELECT
+    'cheese' as topping,
+    SUM(cheese) as sum
+FROM toppings_reviewed
+UNION
+SELECT
+    'chicken' as topping,
+    SUM(chicken) as sum
+FROM toppings_reviewed
+UNION
+SELECT
+    'mushrooms' as topping,
+    SUM(mushrooms) as sum
+FROM toppings_reviewed
+UNION
+SELECT
+    'onions' as topping,
+    SUM(onions) as sum
+FROM toppings_reviewed
+UNION
+SELECT
+    'pepperoni' as topping,
+    SUM(pepperoni) as sum
+FROM toppings_reviewed
+UNION
+SELECT
+    'peppers' as topping,
+    SUM(peppers) as sum
+FROM toppings_reviewed
+UNION
+SELECT
+    'salami' as topping,
+    SUM(salami) as sum
+FROM toppings_reviewed
+UNION
+SELECT
+    'tomato_sauce' as topping,
+    SUM(tomato_sauce) as sum
+FROM toppings_reviewed
+UNION
+SELECT
+    'tomatoes' as topping,
+    SUM(tomatoes) as sum
+FROM toppings_reviewed
+ORDER BY sum DESC
