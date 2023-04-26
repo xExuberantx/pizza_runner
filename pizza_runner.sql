@@ -829,6 +829,49 @@ VALUES
       Total number of pizzas */
 
 SELECT
+      customer_id,
+      order_id,
+      ro.runner_id,
+      rating,
+      order_time,
+      pickup_time,
+      pickup_time - order_time as order_to_pickup,
+      duration as del_duration_min,
+      ROUND(distance/duration*60, 2) avg_speed_kmh,
+      COUNT(*) as no_of_pizzas
+FROM pizza_runner.customer_orders as co
+JOIN pizza_runner.runner_orders as ro
+USING(order_id)
+JOIN pizza_runner.runner_ratings as rr
+USING(order_id)
+GROUP BY customer_id, order_id, ro.runner_id, rating, order_time, pickup_time, duration, distance
+ORDER BY order_id
 
 -- 5. If a Meat Lovers pizza was $12 and Vegetarian $10 fixed prices with no cost for extras and each runner is paid $0.30 per kilometre traveled - 
 --    how much money does Pizza Runner have left over after these deliveries?
+WITH cte as (
+    SELECT
+        order_id,
+        SUM(price) as revenue,
+        distance
+    FROM (
+        SELECT
+            order_id,
+            pizza_id,
+            CASE WHEN pizza_id=1 THEN 12 WHEN pizza_id=2 THEN 10 END AS price
+        FROM pizza_runner.customer_orders) as t 
+    JOIN pizza_runner.runner_orders
+    USING(order_id)
+    WHERE cancellation IS NULL
+    GROUP BY order_id, distance
+    ORDER BY order_id)
+
+SELECT SUM(revenue_minus_cost)
+FROM (
+    SELECT
+        order_id,
+        revenue,
+        distance,
+        distance * 0.3 as cost_of_delivery,
+        revenue - distance * 0.3 as revenue_minus_cost
+    FROM cte) as t
