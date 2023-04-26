@@ -590,64 +590,33 @@ WITH cus_or as (
         FROM cus_or
         JOIN pizza_runner.recipes_pivotted
         USING(pizza_id)
-    )
-
-
--- 5 tbc
-WITH cus_or as (
-        SELECT
-            order_id,
-            customer_id,
-            pizza_id,
-            pizza_name,
-            string_to_array(exclusions, ', ') as exclusions,
-            string_to_array(extras, ', ') as extras,
-            order_time
-        FROM pizza_runner.customer_orders
-        JOIN pizza_runner.pizza_names
-        USING(pizza_id)
-        ),
-    toppings_reviewed as (
+    ),
+    toppings_converted as (
         SELECT
             order_id,
             pizza_id,
             customer_id,
             pizza_name,
-            exclusions,
-            extras,
-            CASE WHEN '1' = ANY(exclusions) THEN bacon - 1 WHEN '1' = ANY(extras) THEN bacon + 1 ELSE bacon END AS bacon,
-            CASE WHEN '2' = ANY(exclusions) THEN bbq_sauce - 1 WHEN '2' = ANY(extras) THEN bbq_sauce + 1 ELSE bbq_sauce END AS bbq_sauce,
-            CASE WHEN '3' = ANY(exclusions) THEN beef - 1 WHEN '3' = ANY(extras) THEN beef + 1 ELSE beef END AS beef,
-            CASE WHEN '4' = ANY(exclusions) THEN cheese - 1 WHEN '4' = ANY(extras) THEN cheese + 1 ELSE cheese END AS cheese,
-            CASE WHEN '5' = ANY(exclusions) THEN chicken - 1 WHEN '5' = ANY(extras) THEN chicken + 1 ELSE chicken END AS chicken,
-            CASE WHEN '6' = ANY(exclusions) THEN mushrooms - 1 WHEN '6' = ANY(extras) THEN mushrooms + 1 ELSE mushrooms END AS mushrooms,
-            CASE WHEN '7' = ANY(exclusions) THEN onions - 1 WHEN '7' = ANY(extras) THEN onions + 1 ELSE onions END AS onions,
-            CASE WHEN '8' = ANY(exclusions) THEN pepperoni - 1 WHEN '8' = ANY(extras) THEN pepperoni + 1 ELSE pepperoni END AS pepperoni,
-            CASE WHEN '9' = ANY(exclusions) THEN peppers - 1 WHEN '9' = ANY(extras) THEN peppers + 1 ELSE peppers END AS peppers,
-            CASE WHEN '10' = ANY(exclusions) THEN salami - 1 WHEN '10' = ANY(extras) THEN salami + 1 ELSE salami END AS salami,
-            CASE WHEN '12' = ANY(exclusions) THEN tomato_sauce - 1 WHEN '12' = ANY(extras) THEN tomato_sauce + 1 ELSE tomato_sauce END AS tomato_sauce,
-            CASE WHEN '11' = ANY(exclusions) THEN tomatoes - 1 WHEN '11' = ANY(extras) THEN tomatoes + 1 ELSE tomatoes END AS tomatoes
-        FROM cus_or
-        JOIN pizza_runner.recipes_pivotted
-        USING(pizza_id)
+            CASE WHEN bacon = 0 THEN NULL WHEN bacon = 1 THEN 'Bacon' ELSE bacon ||'xBacon' END AS bacon,
+            CASE WHEN bbq_sauce = 0 THEN NULL WHEN bbq_sauce = 1 THEN 'BBQ Sauce' ELSE bbq_sauce ||'xBBQ Sauce' END AS bbq_sauce,
+            CASE WHEN beef = 0 THEN NULL WHEN beef = 1 THEN 'Beef' ELSE beef ||'xBeef' END AS beef,
+            CASE WHEN cheese = 0 THEN NULL WHEN cheese = 1 THEN 'Cheese' ELSE cheese ||'xCheese' END AS cheese,
+            CASE WHEN chicken = 0 THEN NULL WHEN chicken = 1 THEN 'Chicken' ELSE chicken ||'xChicken' END AS chicken,
+            CASE WHEN mushrooms = 0 THEN NULL WHEN mushrooms = 1 THEN 'Mushrooms' ELSE mushrooms ||'xMushrooms' END AS mushrooms,
+            CASE WHEN onions = 0 THEN NULL WHEN onions = 1 THEN 'Onions' ELSE onions ||'xOnions' END AS onions,
+            CASE WHEN pepperoni = 0 THEN NULL WHEN pepperoni = 1 THEN 'Pepperoni' ELSE pepperoni ||'xPepperoni' END AS pepperoni,
+            CASE WHEN peppers = 0 THEN NULL WHEN peppers = 1 THEN 'Peppers' ELSE peppers ||'xPeppers' END AS peppers,
+            CASE WHEN salami = 0 THEN NULL WHEN salami = 1 THEN 'Salami' ELSE salami ||'xSalami' END AS salami,
+            CASE WHEN tomato_sauce = 0 THEN NULL WHEN tomato_sauce = 1 THEN 'Tomato Sauce' ELSE tomato_sauce ||'xTomato Sauce' END AS tomato_sauce,
+            CASE WHEN tomatoes = 0 THEN NULL WHEN tomatoes = 1 THEN 'Tomatoes' ELSE tomatoes ||'xTomatoes' END AS tomatoes
+        FROM toppings_reviewed
     )
-    SELECT
-        order_id,
-        pizza_name,
-        CASE WHEN bacon = 0 THEN NULL WHEN bacon = 1 THEN 'Bacon' ELSE bacon ||'xBacon' END AS bacon,
-        CASE WHEN bbq_sauce = 0 THEN NULL WHEN bbq_sauce = 1 THEN 'BBQ Sauce' ELSE bbq_sauce ||'xBBQ Sauce' END AS bbq_sauce,
-        CASE WHEN beef = 0 THEN NULL WHEN beef = 1 THEN 'Beef' ELSE beef ||'xBeef' END AS beef,
-        CASE WHEN cheese = 0 THEN NULL WHEN cheese = 1 THEN 'Cheese' ELSE cheese ||'xCheese' END AS cheese,
-        CASE WHEN bacon = 0 THEN NULL WHEN bacon = 1 THEN 'Bacon' ELSE bacon ||'xBacon' END AS bacon,
-        CASE WHEN bacon = 0 THEN NULL WHEN bacon = 1 THEN 'Bacon' ELSE bacon ||'xBacon' END AS bacon,
-        CASE WHEN bacon = 0 THEN NULL WHEN bacon = 1 THEN 'Bacon' ELSE bacon ||'xBacon' END AS bacon,
-        CASE WHEN bacon = 0 THEN NULL WHEN bacon = 1 THEN 'Bacon' ELSE bacon ||'xBacon' END AS bacon,
-        CASE WHEN bacon = 0 THEN NULL WHEN bacon = 1 THEN 'Bacon' ELSE bacon ||'xBacon' END AS bacon,
-        CASE WHEN bacon = 0 THEN NULL WHEN bacon = 1 THEN 'Bacon' ELSE bacon ||'xBacon' END AS bacon,
-        CASE WHEN bacon = 0 THEN NULL WHEN bacon = 1 THEN 'Bacon' ELSE bacon ||'xBacon' END AS bacon,
-        CASE WHEN bacon = 0 THEN NULL WHEN bacon = 1 THEN 'Bacon' ELSE bacon ||'xBacon' END AS bacon
-
-    FROM toppings_reviewed
+SELECT
+    order_id,
+    pizza_name || ': ' || concat_ws(', ', bacon, bbq_sauce, beef, cheese, chicken, mushrooms, onions, pepperoni, peppers, salami, tomato_sauce, tomatoes)
+    as toppings_list
+FROM toppings_converted
+ORDER BY order_id
 
 -- 6. What is the total quantity of each ingredient used in all delivered pizzas sorted by most frequent first?
 
